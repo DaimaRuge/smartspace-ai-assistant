@@ -1,6 +1,6 @@
 {
   "name": "smartspace-ai-assistant-backend",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "SmartSpace AI Assistant Backend Service",
   "main": "dist/index.js",
   "type": "module",
@@ -18,7 +18,8 @@
     "smart-home",
     "openclaw",
     "whisper",
-    "langchain"
+    "langchain",
+    "edge-tts"
   ],
   "author": "DaimaRuge",
   "license": "MIT",
@@ -35,7 +36,8 @@
     "pino": "^9.4.0",
     "pino-pretty": "^11.2.0",
     "dotenv": "^16.4.5",
-    "zod": "^3.23.8"
+    "zod": "^3.23.8",
+    "edge-tts": "^2.0.0"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

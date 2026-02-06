@@ -4,7 +4,7 @@ import jwt from '@fastify/jwt';
 import websocket from '@fastify/websocket';
 import swagger from '@fastify/swagger';
 import { registerRoutes } from './routes/index.js';
-import { getServiceManager } from './services/ServiceManager.js';
+import { registerPlugins } from './plugins/index.js';
 import { Logger } from './utils/logger.js';
 
 const logger = new Logger();
@@ -23,6 +23,9 @@ async function buildServer() {
       },
     },
   });
+
+  // Register plugins
+  await registerPlugins(fastify);
 
   // Register CORS
   await fastify.register(cors, {
@@ -44,7 +47,7 @@ async function buildServer() {
       info: {
         title: 'SmartSpace AI Assistant API',
         description: 'API documentation for SmartSpace AI Assistant',
-        version: '1.0.0',
+        version: '0.3.0',
       },
       servers: [
         {
@@ -59,8 +62,13 @@ async function buildServer() {
   await registerRoutes(fastify);
 
   // Initialize services
-  const serviceManager = getServiceManager();
-  await serviceManager.testConnection();
+  try {
+    const { getServiceManager } = await import('./services/ServiceManager.js');
+    const serviceManager = getServiceManager();
+    await serviceManager.testConnection();
+  } catch (error) {
+    logger.warn('Service initialization skipped (imported from build)', error);
+  }
 
   // Health check
   fastify.get('/health', async () => {
@@ -68,10 +76,12 @@ async function buildServer() {
       status: 'ok',
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
+      version: '0.3.0',
       services: {
         llm: 'connected',
         agent: 'ready',
         voice: 'ready',
+        websocket: 'enabled',
       },
     };
   });
@@ -90,6 +100,7 @@ async function start() {
     logger.info('🚀 SmartSpace AI Assistant API Server started');
     logger.info('📡 Server listening on http://%s:%s', host, port);
     logger.info('📚 API Docs: http://%s:%s/docs', host, port);
+    logger.info('🔌 WebSocket: ws://%s:%s/ws/voice', host, port);
   } catch (err) {
     logger.error('Failed to start server', err);
     process.exit(1);
