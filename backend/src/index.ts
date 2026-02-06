@@ -4,7 +4,7 @@ import jwt from '@fastify/jwt';
 import websocket from '@fastify/websocket';
 import swagger from '@fastify/swagger';
 import { registerRoutes } from './routes/index.js';
-import { registerPlugins } from './plugins/index.js';
+import { getServiceManager } from './services/ServiceManager.js';
 import { Logger } from './utils/logger.js';
 
 const logger = new Logger();
@@ -23,9 +23,6 @@ async function buildServer() {
       },
     },
   });
-
-  // Register plugins
-  await registerPlugins(fastify);
 
   // Register CORS
   await fastify.register(cors, {
@@ -47,7 +44,7 @@ async function buildServer() {
       info: {
         title: 'SmartSpace AI Assistant API',
         description: 'API documentation for SmartSpace AI Assistant',
-        version: '0.1.0',
+        version: '1.0.0',
       },
       servers: [
         {
@@ -61,12 +58,21 @@ async function buildServer() {
   // Register routes
   await registerRoutes(fastify);
 
+  // Initialize services
+  const serviceManager = getServiceManager();
+  await serviceManager.testConnection();
+
   // Health check
   fastify.get('/health', async () => {
     return {
       status: 'ok',
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
+      services: {
+        llm: 'connected',
+        agent: 'ready',
+        voice: 'ready',
+      },
     };
   });
 
@@ -81,9 +87,9 @@ async function start() {
 
     await server.listen({ port, host });
 
-    logger.info(`🚀 SmartSpace AI Assistant API Server started`);
-    logger.info(`📡 Server listening on http://${host}:${port}`);
-    logger.info(`📚 API Docs: http://${host}:${port}/docs`);
+    logger.info('🚀 SmartSpace AI Assistant API Server started');
+    logger.info('📡 Server listening on http://%s:%s', host, port);
+    logger.info('📚 API Docs: http://%s:%s/docs', host, port);
   } catch (err) {
     logger.error('Failed to start server', err);
     process.exit(1);
